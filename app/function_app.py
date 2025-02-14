@@ -76,50 +76,56 @@ def initialize_client():
 def prompt(req: func.HttpRequest) -> func.HttpResponse:
     logging.info('Python HTTP trigger function processed a request.')
 
-    # Get the prompt from the request body
-    req_body = req.get_json()
-    prompt = req_body.get('Prompt')
+    try:
+        # Get the prompt from the request body
+        req_body = req.get_json()
+        prompt = req_body.get('Prompt')
 
-    # Initialize the agent client
-    project_client, thread, agent = initialize_client()
+        # Initialize the agent client
+        project_client, thread, agent = initialize_client()
 
-    # Send the prompt to the agent
-    message = project_client.agents.create_message(
-        thread_id=thread.id,
-        role="user",
-        content=prompt,
-    )
-    logging.info(f"Created message, message ID: {message.id}")
+        # Send the prompt to the agent
+        message = project_client.agents.create_message(
+            thread_id=thread.id,
+            role="user",
+            content=prompt,
+        )
+        logging.info(f"Created message, message ID: {message}")
 
-    # Run the agent
-    run = project_client.agents.create_run(thread_id=thread.id, assistant_id=agent.id)
-    # Monitor and process the run status
-    while run.status in ["queued", "in_progress", "requires_action"]:
-        time.sleep(1)
-        run = project_client.agents.get_run(thread_id=thread.id, run_id=run.id)
+        # Run the agent
+        run = project_client.agents.create_run(thread_id=thread.id, assistant_id=agent.id)
+        # Monitor and process the run status
+        while run.status in ["queued", "in_progress", "requires_action"]:
+            time.sleep(1)
+            run = project_client.agents.get_run(thread_id=thread.id, run_id=run.id)
 
-        if run.status not in ["queued", "in_progress", "requires_action"]:
-            break
+            if run.status not in ["queued", "in_progress", "requires_action"]:
+                break
 
-    logging.info(f"Run finished with status: {run.status}")
+        logging.info(f"Run finished with status: {run.status}")
 
-    if run.status == "failed":
-        logging.error(f"Run failed: {run.last_error}")
+        # if run.status == "failed":
+        #     logging.error(f"Run failed: {run.last_error}")
+        #     return func.HttpResponse(f"Run failed: {run.last_error}", status_code=500)
 
-    # Get messages from the assistant thread
-    messages = project_client.agents.get_messages(thread_id=thread.id)
-    logging.info(f"Messages: {messages}")
+        # Get messages from the assistant thread
+        messages = project_client.agents.get_messages(thread_id=thread.id)
+        logging.info(f"Messages: {messages}")
 
-    # Get the last message from the assistant
-    last_msg = messages.get_last_text_message_by_sender("assistant")
-    if last_msg:
-        logging.info(f"Last Message: {last_msg.text.value}")
+        # Get the last message from the assistant
+        last_msg = messages.get_last_text_message_by_sender("assistant")
+        if last_msg:
+            logging.info(f"Last Message: {last_msg.text.value}")
 
-    # Delete the agent once done
-    project_client.agents.delete_agent(agent.id)
-    print("Deleted agent")
+        # Delete the agent once done
+        # project_client.agents.delete_agent(agent.id)
+        logging.info("Deleted agent")
 
-    return func.HttpResponse(last_msg.text.value)
+        return func.HttpResponse(last_msg.text.value if last_msg else "No response from assistant", status_code=200)
+
+    except Exception as e:
+        logging.error(f"Exception occurred: {str(e)}")
+        return func.HttpResponse(f"Exception occurred: {str(e)}", status_code=500)
 
 # Function to get the weather
 @app.function_name(name="GetWeather")
