@@ -1,4 +1,6 @@
-@host=http://localhost:7071
+# @host=http://localhost:7071
+
+@host=https://func-api-whsekh4bl5uag.azurewebsites.net/
 
 
 ### Ask what the weather is in a place to trigger GetWeather function
