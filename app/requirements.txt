@@ -7,3 +7,6 @@ azure-ai-projects==1.0.0b2
 azure-storage-queue
 azure-identity
 azure-ai-ml
+azure-ai-inference[opentelemetry] 
+pip install opentelemetry 
+pip install opentelemetry-exporter-otlp

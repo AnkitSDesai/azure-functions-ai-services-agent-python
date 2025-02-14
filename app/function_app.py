@@ -6,6 +6,13 @@ import time
 from azure.ai.projects import AIProjectClient
 from azure.identity import DefaultAzureCredential
 from azure.storage.queue import QueueClient, BinaryBase64EncodePolicy, BinaryBase64DecodePolicy
+from azure.core.pipeline.policies import DistributedTracingPolicy
+from azure.monitor.opentelemetry.exporter import AzureMonitorTraceExporter
+from opentelemetry import trace
+from opentelemetry.exporter.otlp.proto.grpc.trace_exporter import OTLPSpanExporter
+from opentelemetry.sdk.resources import Resource
+from opentelemetry.sdk.trace import TracerProvider
+from opentelemetry.sdk.trace.export import BatchSpanProcessor
 
 app = func.FunctionApp()
 
@@ -14,12 +21,33 @@ app = func.FunctionApp()
 input_queue_name = "input"
 output_queue_name = "output"
 
+# Initialize tracing
+def initialize_tracing():
+    resource = Resource(attributes={
+        "service.name": "azure-functions-ai-services-agent-python"
+    })
+    provider = TracerProvider(resource=resource)
+    trace.set_tracer_provider(provider)
+
+    # Configure the OTLP exporter
+    otlp_exporter = OTLPSpanExporter(endpoint="http://localhost:4317", insecure=True)
+    provider.add_span_processor(BatchSpanProcessor(otlp_exporter))
+
+    # Configure the Azure Monitor exporter
+    azure_monitor_exporter = AzureMonitorTraceExporter.from_connection_string(
+        os.environ["APPLICATIONINSIGHTS_CONNECTION_STRING"]
+    )
+    provider.add_span_processor(BatchSpanProcessor(azure_monitor_exporter))
+
+initialize_tracing()
+
 # Function to initialize the agent client and the tools Azure Functions that the agent can use
 def initialize_client():
     # Create a project client using the connection string from local.settings.json
     project_client = AIProjectClient.from_connection_string(
         credential=DefaultAzureCredential(),
-        conn_str=os.environ["PROJECT_CONNECTION_STRING"]
+        conn_str=os.environ["PROJECT_CONNECTION_STRING"],
+        policies=[DistributedTracingPolicy()]
     )
 
     # Get the connection string from local.settings.json
