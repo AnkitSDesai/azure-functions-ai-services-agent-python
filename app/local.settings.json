@@ -1,0 +1,9 @@
+{
+  "IsEncrypted": "false",
+  "Values": {
+    "PROJECT_CONNECTION_STRING": "westus2.api.azureml.ms;8e634b7c-a328-47ad-8df7-721035f015e6;rg-agentaidemo;project-demoojieiywzrwv7i",
+    "AzureWebJobsStorage": "UseDevelopmentStorage=true",
+    "FUNCTIONS_WORKER_RUNTIME": "python",
+    "STORAGE_CONNECTION__queueServiceUri": "https://stwhsekh4bl5uag.queue.core.windows.net"
+  }
+}
