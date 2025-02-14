@@ -103,9 +103,9 @@ def prompt(req: func.HttpRequest) -> func.HttpResponse:
 
         logging.info(f"Run finished with status: {run.status}")
 
-        # if run.status == "failed":
-        #     logging.error(f"Run failed: {run.last_error}")
-        #     return func.HttpResponse(f"Run failed: {run.last_error}", status_code=500)
+        if run.status == "failed":
+            logging.error(f"Run failed: {run.last_error}")
+            return func.HttpResponse(f"Run failed: {run.last_error}", status_code=500)
 
         # Get messages from the assistant thread
         messages = project_client.agents.get_messages(thread_id=thread.id)
@@ -118,7 +118,7 @@ def prompt(req: func.HttpRequest) -> func.HttpResponse:
 
         # Delete the agent once done
         # project_client.agents.delete_agent(agent.id)
-        logging.info("Deleted agent")
+        logging.info("Not Deleted agent")
 
         return func.HttpResponse(last_msg.text.value if last_msg else "No response from assistant", status_code=200)
 
